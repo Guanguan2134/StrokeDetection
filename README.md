@@ -61,9 +61,7 @@ We observe that our data can be distinguished between few types by position, and
     python main.py -m UNet -a leaky_relu -e 50
     ```
 
-:::info
-<font size=2>*\*Please notice that if you have a very small dataset (under 1000 images), you should train for several times to get the best model.*</font>
-:::
+> <font size=2>*\*Please notice that if you have a very small dataset (under 1000 images), you should train for several times to get the best model.*</font>
 
 <font size=6>**Evaluation**</font>
 ---
