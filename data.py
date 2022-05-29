@@ -1,11 +1,12 @@
 from __future__ import print_function
-from keras.preprocessing.image import ImageDataGenerator
-import numpy as np 
 import os
+import shutil
 import glob
+import numpy as np 
 import skimage.io as io
 import skimage.transform as trans
-from skimage import img_as_ubyte, img_as_float
+from skimage import img_as_float
+from keras.preprocessing.image import ImageDataGenerator
 
 Sky = [128,128,128]
 Building = [128,0,0]
@@ -42,8 +43,7 @@ def adjustData(img,mask,flag_multi_class,num_class):
         mask = mask /255
         mask[mask > 0.5] = 1
         mask[mask <= 0.5] = 0
-    return (img,mask)
-
+    return (img, mask)
 
 
 def trainGenerator(batch_size,train_path,image_folder,mask_folder,aug_dict,image_color_mode = "grayscale",
@@ -82,23 +82,43 @@ def trainGenerator(batch_size,train_path,image_folder,mask_folder,aug_dict,image
         yield (img,mask)
 
 
-
-def testGenerator(test_path,num_image = 30,target_size = (256,256),flag_multi_class = False,as_gray = True):
+def testGenerator(test_path, mask_path, target_size=(256,256), flag_multi_class=False, num_class=2, as_gray=True):
     th = 0.9
-    for i in range(num_image):
-        img = io.imread(os.path.join(test_path,"%d.png"%i),as_gray = as_gray)
-        img *= 2
-        img = trans.resize(img,target_size)
-        img = np.reshape(img,img.shape+(1,)) if (not flag_multi_class) else img
-        img = np.reshape(img,(1,)+img.shape)
-        yield img
+    filename = glob.glob(os.path.join(test_path, "*.png"))
+    mask_filename = glob.glob(os.path.join(mask_path, "*.png"))
+    for name, mask_name in zip(filename, mask_filename):
+        img = io.imread(name, as_gray=as_gray)
+        # img *= 2
+        img = trans.resize(img, target_size)
+        img = np.reshape(img, img.shape+(1,)) if (not flag_multi_class) else img
+        img = np.reshape(img, (1,)+img.shape)
+
+        mask = io.imread(mask_name, as_gray=as_gray)
+        mask = trans.resize(mask, target_size)
+        mask = np.reshape(mask, mask.shape+(1,)) if (not flag_multi_class) else mask
+        mask = np.reshape(mask, (1,)+mask.shape)
+        img, mask = adjustData(img, mask, flag_multi_class, num_class)
+        yield (img, mask)
+
+
+def make_val(dataset_dir, val_path):
+	val_dir = os.path.join(dataset_dir, "val")
+	if os.path.exists(val_dir):
+		shutil.rmtree(val_dir)
+	os.mkdir(val_dir)
+	os.mkdir(os.path.join(val_dir, "image"))
+	os.mkdir(os.path.join(val_dir, "label"))
+	for path in val_path:
+		shutil.move(path, os.path.join(val_dir, os.path.basename(os.path.dirname(path)), os.path.basename(path)))
+		path = path.replace(os.path.basename(os.path.dirname(path)), "label")
+		shutil.move(path, os.path.join(val_dir, os.path.basename(os.path.dirname(path)), os.path.basename(path)))
 
 
 def geneTrainNpy(image_path,mask_path,flag_multi_class = False,num_class = 2,image_prefix = "image",mask_prefix = "mask",image_as_gray = True,mask_as_gray = True):
     image_name_arr = glob.glob(os.path.join(image_path,"%s*.png"%image_prefix))
     image_arr = []
     mask_arr = []
-    for index,item in enumerate(image_name_arr):
+    for index, item in enumerate(image_name_arr):
         img = io.imread(item,as_gray = image_as_gray)
         img = np.reshape(img,img.shape + (1,)) if image_as_gray else img
         mask = io.imread(item.replace(image_path,mask_path).replace(image_prefix,mask_prefix),as_gray = mask_as_gray)
@@ -111,17 +131,16 @@ def geneTrainNpy(image_path,mask_path,flag_multi_class = False,num_class = 2,ima
     return image_arr,mask_arr
 
 
-def labelVisualize(num_class,color_dict,img):
+def labelVisualize(num_class, color_dict, img):
     img = img[:,:,0] if len(img.shape) == 3 else img
     img_out = np.zeros(img.shape + (3,))
     for i in range(num_class):
         img_out[img == i,:] = color_dict[i]
-    return img_out / 255
+    return img_out
 
 
-
-def saveResult(save_path,npyfile,flag_multi_class = False,num_class = 2):
+def saveResult(save_path, npyfile, flag_multi_class = False, num_class = 2):
     for i, item in enumerate(npyfile):
-        img = labelVisualize(num_class,COLOR_DICT,item) if flag_multi_class else item[:,:,0]
+        img = labelVisualize(num_class, COLOR_DICT, item) if flag_multi_class else item[:,:,0]
         # img = np.resize(img, (150, 150))
         io.imsave(os.path.join(save_path, "%d.tif" % i), img_as_float(img))

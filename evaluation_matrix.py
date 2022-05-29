@@ -144,3 +144,34 @@ def hausdorff_core(seg, ground):
     seg_[seg_ == 2] = 0
     ground_[ground_ == 2] = 0
     return Hausdorff_distance(seg_ == 0, ground_ == 0)
+
+def evaluation(model, img, ground, verbose=1):
+    tp = 0
+    tn = 0
+    fp = 0
+    fn = 0
+    threshold = 0.5
+    seg = model.predict(img)[0]
+    for i, j in zip(seg, ground):
+        for x, y in zip(i, j):
+            if x >= threshold and y >= threshold:
+                tp += 1
+            elif x < threshold and y < threshold:
+                tn += 1
+            elif x >= threshold and y < threshold:
+                fp += 1
+            elif x < threshold and y >= threshold:
+                fn += 1
+    sen = tp/(tp+fn)
+    spe = tn/(tn+fp)
+    iou = tp/(fn+fp+tp)
+    dice = tp/(2*tp+fn+fp)
+    
+    if verbose==1:
+        print("============================")
+        print("Dice score : {:0.4f}".format(dice))
+        print("Sensitivity score : {:0.4f}".format(sen))
+        print("Specificity score : {:0.4f}".format(spe))
+        print("IoU score : {:0.4f}".format(iou))
+        print("============================")
+    return dice, sen, spe, iou

@@ -1,0 +1,5 @@
+tensorflow==2.5.0
+sklearn
+tqdm
+matplotlib
+scikit-image
