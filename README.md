@@ -8,7 +8,16 @@ Eventually, our stroke segmentation model got **0.6384 IoU with 0.6765 sensitivi
 
 <img src=https://i.imgur.com/yBW0Uyw.jpg width=200><br>
 
-[TOC]
+# Table of Content
+
+* [Few-shot Learning of CT Stroke Segmentation Based on U-Net](#Few-shot-Learning-of-CT-Stroke-Segmentation-Based-on-U-Net)
+	* [Dependencies](#Dependencies)
+	* [Demo](#Demo)
+	* [Training](#Training)
+		* [Data preprocessing](#Data-preprocessing)
+		* [Start training](#Start-training)
+	* [Evaluation](#Evaluation)
+
 
 <font size=6>**Dependencies**</font>
 ---
@@ -52,9 +61,7 @@ We observe that our data can be distinguished between few types by position, and
     python main.py -m UNet -a leaky_relu -e 50
     ```
 
-:::info
-<font size=2>*\*Please notice that if you have a very small dataset (under 1000 images), you should train for several times to get the best model.*</font>
-:::
+> <font size=2>*\*Please notice that if you have a very small dataset (under 1000 images), you should train for several times to get the best model.*</font>
 
 <font size=6>**Evaluation**</font>
 ---
